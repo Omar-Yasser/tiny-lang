@@ -14,12 +14,10 @@ public enum Token_Class
 }
 namespace TINY_Compiler
 {
-    
-
     public class Token
     {
-       public string lex;
-       public Token_Class token_type;
+        public string lex;
+        public Token_Class token_type;
     }
 
     public class Scanner
@@ -65,14 +63,10 @@ namespace TINY_Compiler
             Operators.Add("-", Token_Class.MinusOp);
             Operators.Add("*", Token_Class.MultiplyOp);
             Operators.Add("/", Token_Class.DivideOp);
-
-
-
         }
-
-    public void StartScanning(string SourceCode)
+        public void StartScanning(string SourceCode)
         {
-            for(int i=0; i<SourceCode.Length;i++)
+            for (int i = 0; i < SourceCode.Length; i++)
             {
                 int j = i;
                 char CurrentChar = SourceCode[i];
@@ -80,26 +74,24 @@ namespace TINY_Compiler
 
                 if (CurrentChar == ' ' || CurrentChar == '\r' || CurrentChar == '\n')
                     continue;
-
                 if (CurrentChar >= 'A' && CurrentChar <= 'z') //if you read a character
                 {
-                   
-                }
 
-                else if(CurrentChar >= '0' && CurrentChar <= '9')
-                {
-                   
                 }
-                else if(CurrentChar == '{')
+                else if (CurrentChar >= '0' && CurrentChar <= '9')
                 {
-                   
+
+                }
+                else if (CurrentChar == '{')
+                {
+
                 }
                 else
                 {
-                   
+
                 }
             }
-            
+
             TINY_Compiler.TokenStream = Tokens;
         }
         void FindTokenClass(string Lex)
@@ -108,10 +100,10 @@ namespace TINY_Compiler
             Token Tok = new Token();
             Tok.lex = Lex;
             //Is it a reserved word?
-            
+
 
             //Is it an identifier?
-            
+
 
             //Is it a Constant?
 
@@ -119,14 +111,11 @@ namespace TINY_Compiler
 
             //Is it an undefined?
         }
-
-    
-
         bool isIdentifier(string lex)
         {
-            bool isValid=true;
+            bool isValid = true;
             // Check if the lex is an identifier or not.
-            
+
             return isValid;
         }
         bool isConstant(string lex)

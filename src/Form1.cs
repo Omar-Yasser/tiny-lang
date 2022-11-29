@@ -24,7 +24,7 @@ namespace TINY_Compiler
             string Code = textBox1.Text;
             TINY_Compiler.Start_Compiling(Code);
             PrintTokens();
-         //   PrintLexemes();
+            //   PrintLexemes();
 
             PrintErrors();
         }
@@ -32,13 +32,13 @@ namespace TINY_Compiler
         {
             for (int i = 0; i < TINY_Compiler.Tiny_Scanner.Tokens.Count; i++)
             {
-               dataGridView1.Rows.Add(TINY_Compiler.Tiny_Scanner.Tokens.ElementAt(i).lex, TINY_Compiler.Tiny_Scanner.Tokens.ElementAt(i).token_type);
+                dataGridView1.Rows.Add(TINY_Compiler.Tiny_Scanner.Tokens.ElementAt(i).lex, TINY_Compiler.Tiny_Scanner.Tokens.ElementAt(i).token_type);
             }
         }
 
         void PrintErrors()
         {
-            for(int i=0; i<Errors.Error_List.Count; i++)
+            for (int i = 0; i < Errors.Error_List.Count; i++)
             {
                 textBox2.Text += Errors.Error_List[i];
                 textBox2.Text += "\r\n";
