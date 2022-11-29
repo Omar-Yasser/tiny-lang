@@ -3,14 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 
 public enum Token_Class
 {
-    Begin, Call, Declare, End, Do, Else, EndIf, EndUntil, EndWhile, If, Integer,
-    Parameters, Procedure, Program, Read, Real, Set, Then, Until, While, Write,
-    Dot, Semicolon, Comma, LParanthesis, RParanthesis, EqualOp, LessThanOp,
+    Int, Float, String, Read, Write, Repeat, Until, If, Elseif,
+    Else, Then, Return, Endl, End, Main, EqualOp, LessThanOp,
     GreaterThanOp, NotEqualOp, PlusOp, MinusOp, MultiplyOp, DivideOp,
-    Idenifier, Constant
+    AndOp, OrOp, AssignmentOp, Constant, Dot, Semicolon, Comma, LParanthesis, RParanthesis, LBrace, RBrace,
+    Idenifier
 }
 namespace TINY_Compiler
 {
@@ -26,104 +27,232 @@ namespace TINY_Compiler
         Dictionary<string, Token_Class> ReservedWords = new Dictionary<string, Token_Class>();
         Dictionary<string, Token_Class> Operators = new Dictionary<string, Token_Class>();
 
+        Dictionary<char, bool> delimiters = new Dictionary<char, bool>();
+
         public Scanner()
         {
-            ReservedWords.Add("IF", Token_Class.If);
-            ReservedWords.Add("BEGIN", Token_Class.Begin);
-            ReservedWords.Add("CALL", Token_Class.Call);
-            ReservedWords.Add("DECLARE", Token_Class.Declare);
-            ReservedWords.Add("END", Token_Class.End);
-            ReservedWords.Add("DO", Token_Class.Do);
-            ReservedWords.Add("ELSE", Token_Class.Else);
-            ReservedWords.Add("ENDIF", Token_Class.EndIf);
-            ReservedWords.Add("ENDUNTIL", Token_Class.EndUntil);
-            ReservedWords.Add("ENDWHILE", Token_Class.EndWhile);
-            ReservedWords.Add("INTEGER", Token_Class.Integer);
-            ReservedWords.Add("PARAMETERS", Token_Class.Parameters);
-            ReservedWords.Add("PROCEDURE", Token_Class.Procedure);
-            ReservedWords.Add("PROGRAM", Token_Class.Program);
-            ReservedWords.Add("READ", Token_Class.Read);
-            ReservedWords.Add("REAL", Token_Class.Real);
-            ReservedWords.Add("SET", Token_Class.Set);
-            ReservedWords.Add("THEN", Token_Class.Then);
-            ReservedWords.Add("UNTIL", Token_Class.Until);
-            ReservedWords.Add("WHILE", Token_Class.While);
-            ReservedWords.Add("WRITE", Token_Class.Write);
+            ReservedWords.Add("int", Token_Class.Int);
+            ReservedWords.Add("float", Token_Class.Float);
+            ReservedWords.Add("string", Token_Class.String);
+            ReservedWords.Add("read", Token_Class.Read);
+            ReservedWords.Add("write", Token_Class.Write);
+            ReservedWords.Add("repeat", Token_Class.Repeat);
+            ReservedWords.Add("until", Token_Class.Until);
+            ReservedWords.Add("if", Token_Class.If);
+            ReservedWords.Add("elseif", Token_Class.Elseif);
+            ReservedWords.Add("else", Token_Class.Else);
+            ReservedWords.Add("then", Token_Class.Then);
+            ReservedWords.Add("return", Token_Class.Return);
+            ReservedWords.Add("endl", Token_Class.Endl);
+            ReservedWords.Add("end", Token_Class.End);
+            ReservedWords.Add("main", Token_Class.Main);
 
+            // assignment operators 
+            Operators.Add(":=", Token_Class.AssignmentOp);
+
+            // conditional operators
+            Operators.Add("<", Token_Class.LessThanOp);
+            Operators.Add(">", Token_Class.GreaterThanOp);
+            Operators.Add("=", Token_Class.EqualOp);
+            Operators.Add("<>", Token_Class.NotEqualOp);
+
+            // boolean operators
+            Operators.Add("&&", Token_Class.AndOp);
+            Operators.Add("||", Token_Class.OrOp);
+
+            // arithmatic operators
+            Operators.Add("+", Token_Class.PlusOp);
+            Operators.Add("-", Token_Class.MinusOp);
+            Operators.Add("*", Token_Class.MultiplyOp);
+            Operators.Add("/", Token_Class.DivideOp);
+
+            // punctuator tokens
             Operators.Add(".", Token_Class.Dot);
             Operators.Add(";", Token_Class.Semicolon);
             Operators.Add(",", Token_Class.Comma);
             Operators.Add("(", Token_Class.LParanthesis);
             Operators.Add(")", Token_Class.RParanthesis);
-            Operators.Add("=", Token_Class.EqualOp);
-            Operators.Add("<", Token_Class.LessThanOp);
-            Operators.Add(">", Token_Class.GreaterThanOp);
-            Operators.Add("!", Token_Class.NotEqualOp);
-            Operators.Add("+", Token_Class.PlusOp);
-            Operators.Add("-", Token_Class.MinusOp);
-            Operators.Add("*", Token_Class.MultiplyOp);
-            Operators.Add("/", Token_Class.DivideOp);
+            Operators.Add("{", Token_Class.LBrace);
+            Operators.Add("}", Token_Class.RBrace);
+
+            // delimiters
+            delimiters.Add('<', true);
+            delimiters.Add('>', true);
+            delimiters.Add('=', true);
+            delimiters.Add('&', true);
+            delimiters.Add('|', true);
+            delimiters.Add('+', true);
+            delimiters.Add('-', true);
+            delimiters.Add('*', true);
+            delimiters.Add('/', true);
+            delimiters.Add('.', true);
+            delimiters.Add(':', true);
+            delimiters.Add(';', true);
+            delimiters.Add(',', true);
+            delimiters.Add('(', true);
+            delimiters.Add(')', true);
+            delimiters.Add('{', true);
+            delimiters.Add('}', true);
+            // white spaces
+            delimiters.Add(' ', true);
+            delimiters.Add('\r', true);
+            delimiters.Add('\t', true);
+            delimiters.Add('\n', true);
+
         }
         public void StartScanning(string SourceCode)
         {
+            // case insensitive
+            SourceCode = SourceCode.ToLower();
+            // remove comments 
+            string comment_regex = @"\/\*.*\*\/";
+            string replace = " ";
+            SourceCode = Regex.Replace(SourceCode, comment_regex, replace);
+
+            /* TODO:
+            comments in strings shouldnt be erased 
+            delimiters in constans
+            */
             for (int i = 0; i < SourceCode.Length; i++)
             {
                 int j = i;
                 char CurrentChar = SourceCode[i];
-                string CurrentLexeme = CurrentChar.ToString();
-
-                if (CurrentChar == ' ' || CurrentChar == '\r' || CurrentChar == '\n')
+                string CurrentLexeme = "";
+                // check operators
+                string op = SourceCode[i].ToString(); // op of size 1
+                string op2 = SourceCode[i].ToString(); // op of size 2
+                if (i < SourceCode.Length - 1)
+                    op2 += SourceCode[i + 1];
+                /* ========================================================================================= */
+                if (CurrentChar == ' ' || CurrentChar == '\r' || CurrentChar == '\t' || CurrentChar == '\n')
                     continue;
-                if (CurrentChar >= 'A' && CurrentChar <= 'z') //if you read a character
+                // identifier, reserved                                
+                if (CurrentChar >= 'a' && CurrentChar <= 'z')
                 {
-
+                    while (j < SourceCode.Length && delimiters.ContainsKey(SourceCode[j]) == false)
+                    {
+                        CurrentLexeme += SourceCode[j];
+                        j++;
+                    }
+                    i = j - 1;
                 }
+                // constant 
                 else if (CurrentChar >= '0' && CurrentChar <= '9')
                 {
-
+                    while (j < SourceCode.Length && delimiters.ContainsKey(SourceCode[j]) == false)
+                    {
+                        CurrentLexeme += SourceCode[j];
+                        j++;
+                    }
+                    i = j - 1;
                 }
-                else if (CurrentChar == '{')
+                // string literals
+                else if (CurrentChar == '\"')
                 {
-
+                    CurrentLexeme += SourceCode[j++];
+                    while (j < SourceCode.Length && SourceCode[j] != '\"')
+                    {
+                        CurrentLexeme += SourceCode[j];
+                        j++;
+                    }
+                    if (j < SourceCode.Length) // code may end with opening quotes
+                        CurrentLexeme += SourceCode[j];
+                    i = j;
+                }
+                // operators of two chars (&&, ||, :=, <>)
+                else if (isOperator(op2))
+                {
+                    CurrentLexeme = op2;
+                    i = j + 1;
+                }
+                // operator of one char 
+                else if (isOperator(op))
+                {
+                    CurrentLexeme = op;
+                    i = j;
                 }
                 else
                 {
-
+                    // invalid token 
+                    CurrentLexeme += SourceCode[j++];
+                    while (j < SourceCode.Length && delimiters.ContainsKey(SourceCode[j]) == false)
+                    {
+                        CurrentLexeme += SourceCode[j];
+                        j++;
+                    }
+                    i = j - 1;
                 }
+                FindTokenClass(CurrentLexeme);
             }
 
             TINY_Compiler.TokenStream = Tokens;
         }
+
+
         void FindTokenClass(string Lex)
         {
-            Token_Class TC;
+            bool isValidToken = false;
             Token Tok = new Token();
             Tok.lex = Lex;
-            //Is it a reserved word?
+            if (isReserved(Lex))
+            {
+                Tok.token_type = ReservedWords[Tok.lex];
+            }
+            else if (isOperator(Lex))
+            {
+                Tok.token_type = Operators[Tok.lex];
+            }
+            else if (isIdentifier(Lex))
+            {
+                Tok.token_type = Token_Class.Idenifier;
+            }
+            else if (isString(Lex))
+            {
+                Tok.token_type = Token_Class.String;
+            }
+            else if (isConstant(Lex))
+            {
+                Tok.token_type = Token_Class.Constant;
 
-
-            //Is it an identifier?
-
-
-            //Is it a Constant?
-
-            //Is it an operator?
-
-            //Is it an undefined?
+            }
+            else
+            {
+                // invalid token
+                Errors.Error_List.Add(Lex);
+                return;
+            }
+            Tokens.Add(Tok);
+        }
+        bool isReserved(string lex)
+        {
+            return ReservedWords.ContainsKey(lex);
         }
         bool isIdentifier(string lex)
         {
-            bool isValid = true;
-            // Check if the lex is an identifier or not.
-
-            return isValid;
+            Regex identifier_regex = new Regex(@"^[a-zA-Z][a-zA-Z0-9]*$", RegexOptions.Compiled);
+            return identifier_regex.IsMatch(lex);
+        }
+        bool isString(string lex)
+        {
+            Regex string_regex = new Regex(@"^\""[^\""]*\""$", RegexOptions.Compiled);
+            return string_regex.IsMatch(lex);
         }
         bool isConstant(string lex)
         {
-            bool isValid = true;
-            // Check if the lex is a constant (Number) or not.
-
-            return isValid;
+            Regex constant_regex = new Regex(@"^(\+|-)?[0-9]+(\.[0-9]+)?((E|e)(\+|-)?[0-9]+)?$", RegexOptions.Compiled);
+            return constant_regex.IsMatch(lex);
+        }
+        bool isOperator(string lex)
+        {
+            return Operators.ContainsKey(lex);
+        }
+        bool isLetter(char c)
+        {
+            return (c >= 'a' && c <= 'z');
+        }
+        bool isDigit(char c)
+        {
+            return (c >= '0' && c <= '9');
         }
     }
 }
