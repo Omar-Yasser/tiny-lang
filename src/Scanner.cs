@@ -102,15 +102,7 @@ namespace TINY_Compiler
         {
             // case insensitive
             SourceCode = SourceCode.ToLower();
-            // remove comments 
-            string comment_regex = @"\/\*.*\*\/";
-            string replace = " ";
-            SourceCode = Regex.Replace(SourceCode, comment_regex, replace);
 
-            /* TODO:
-            comments in strings shouldnt be erased 
-            delimiters in constans
-            */
             for (int i = 0; i < SourceCode.Length; i++)
             {
                 int j = i;
@@ -124,8 +116,39 @@ namespace TINY_Compiler
                 /* ========================================================================================= */
                 if (CurrentChar == ' ' || CurrentChar == '\r' || CurrentChar == '\t' || CurrentChar == '\n')
                     continue;
-                // identifier, reserved                                
-                if (CurrentChar >= 'a' && CurrentChar <= 'z')
+                // string literals
+                if (CurrentChar == '\"')
+                {
+                    CurrentLexeme += SourceCode[j++];
+                    while (j < SourceCode.Length && SourceCode[j] != '\"')
+                    {
+                        CurrentLexeme += SourceCode[j];
+                        j++;
+                    }
+                    if (j < SourceCode.Length)
+                    {
+                        CurrentLexeme += SourceCode[j];
+                    }
+                    i = j;
+                }
+                // self-explainatory
+                else if (op2 == "/*")
+                {
+                    while (j < SourceCode.Length - 1 && !(SourceCode[j] == '*' && SourceCode[j + 1] == '/'))
+                    {
+                        CurrentLexeme += SourceCode[j];
+                        j++;
+                    }
+                    if (j < SourceCode.Length - 1)
+                    {
+                        CurrentLexeme += SourceCode[j];
+                        CurrentLexeme += SourceCode[j + 1];
+                    }
+                    i = j + 1;
+                    continue;
+                }
+                // identifier, reserved
+                else if (CurrentChar >= 'a' && CurrentChar <= 'z')
                 {
                     while (j < SourceCode.Length && delimiters.ContainsKey(SourceCode[j]) == false)
                     {
@@ -143,19 +166,6 @@ namespace TINY_Compiler
                         j++;
                     }
                     i = j - 1;
-                }
-                // string literals
-                else if (CurrentChar == '\"')
-                {
-                    CurrentLexeme += SourceCode[j++];
-                    while (j < SourceCode.Length && SourceCode[j] != '\"')
-                    {
-                        CurrentLexeme += SourceCode[j];
-                        j++;
-                    }
-                    if (j < SourceCode.Length) // code may end with opening quotes
-                        CurrentLexeme += SourceCode[j];
-                    i = j;
                 }
                 // operators of two chars (&&, ||, :=, <>)
                 else if (isOperator(op2))
