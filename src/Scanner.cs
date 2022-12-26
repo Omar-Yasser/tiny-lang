@@ -10,7 +10,7 @@ public enum Token_Class
     Int, Float, String, Read, Write, Repeat, Until, If, Elseif,
     Else, Then, Return, Endl, End, Main, EqualOp, LessThanOp,
     GreaterThanOp, NotEqualOp, PlusOp, MinusOp, MultiplyOp, DivideOp,
-    AndOp, OrOp, AssignmentOp, Constant, Semicolon, Comma, LParanthesis, RParanthesis, LBrace, RBrace,
+    AndOp, OrOp, AssignmentOp, Constant, Dot, Semicolon, Comma, LParanthesis, RParanthesis, LBrace, RBrace,
     Idenifier
 }
 namespace TINY_Compiler
@@ -67,6 +67,7 @@ namespace TINY_Compiler
             Operators.Add("/", Token_Class.DivideOp);
 
             // punctuator tokens
+            //Operators.Add(".", Token_Class.Dot);
             Operators.Add(";", Token_Class.Semicolon);
             Operators.Add(",", Token_Class.Comma);
             Operators.Add("(", Token_Class.LParanthesis);
@@ -84,6 +85,7 @@ namespace TINY_Compiler
             delimiters.Add('-', true);
             delimiters.Add('*', true);
             delimiters.Add('/', true);
+            //delimiters.Add('.', true);
             delimiters.Add(':', true);
             delimiters.Add(';', true);
             delimiters.Add(',', true);
@@ -96,7 +98,7 @@ namespace TINY_Compiler
             delimiters.Add('\r', true);
             delimiters.Add('\t', true);
             delimiters.Add('\n', true);
-
+   
         }
         public void StartScanning(string SourceCode)
         {
