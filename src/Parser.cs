@@ -55,56 +55,40 @@ namespace TINY_Compiler
         //  3 Function_Call | ε
         Node State()
         {
+            if(!(InputPointer < TokenStream.size)) return null;
+
             Node state =new Node("State");
-            if(InputPointer < TokenStream.size && TokenStream[InputPointer].token_type == Token_Class.Write)
+            switch (TokenStream[InputPointer].token_type)
             {
-                state.Children.Add(Write_Statement());
-                return state;
+                case Token_Class.Write:
+                    state.Children.Add(Write_Statement());
+                    break;
+                case Token_Class.Read:
+                    state.Children.Add(Read_Statement());
+                    break;
+                case Token_Class.If:
+                    state.Children.Add(If_Statement());
+                    break;
+                case Token_Class.Repeat:
+                    state.Children.Add(Repeat_Statement());
+                    break;
+                case Token_Class.Identifier:
+                    //Function_Call → identifier (Args)
+                    //Assignment_Statement → identifier := Expression
+                    if(InputPointer + 1 < TokenStream && TokenStream[InputPointer+1].token_type == Token_Class.LParanthesis)
+                        state.Children.Add(Function_Call());
+                    else
+                        state.Children.Add(Assignment_Statement());
+                    break;
+                case Token_Class.Write:
+                    state.Children.Add(Declaration_Statement());
+                    break;
+                default:
+                    if(!isDatatype()) return null;
+                    state.Children.Add(Declaration_Statement());
             }
 
-            else if(InputPointer < TokenStream.size && TokenStream[InputPointer].token_type == Token_Class.Read)
-            {
-                state.Children.Add(Read_Statement());
-                return state;
-            }
-
-            else if(InputPointer < TokenStream.size && TokenStream[InputPointer].token_type == Token_Class.If)
-            {
-                state.Children.Add(If_Statement());
-                return state;
-            }
-
-            else if(InputPointer < TokenStream.size && TokenStream[InputPointer].token_type == Token_Class.Repeat)
-            {
-               state.Children.Add(Repeat_Statement());
-                return state; 
-            }
-
-            else if(InputPointer < TokenStream.size && TokenStream[InputPointer].token_type == Token_Class.identifier)
-            {
-                //Function_Call → identifier (Args)
-                //Assignment_Statement → identifier := Expression
-                if(InputPointer + 1 < TokenStream && TokenStream[InputPointer+1].token_type == Token_Class.LParanthesis)
-                {
-                    state.Children.Add(Function_Call());
-                }
-                else
-                {
-                    state.Children.Add(Assignment_Statement());
-                }
-                return state;
-            }
-
-            else if(InputPointer < TokenStream.size && isDatatype())
-            {
-                state.Children.Add(Declaration_Statement());
-                return state;
-            }
-
-            else
-            {
-                return null;
-            }
+            return state;
         }
 
         //Main_Function → Datatype main() Function_Body
@@ -123,13 +107,13 @@ namespace TINY_Compiler
         Node Functions()
         {
             Node functions = new Node("Functions");
-            if(InputPointer < TokenStream.size && ())
+            if (InputPointer < TokenStream.size && isDatatype())
             {
                 functions.Children.Add(Function_Statement());
                 functions.Children.Add(Functions());
                 return functions;
             }
-            else 
+            else
             {
                 return null;
             }
@@ -149,24 +133,53 @@ namespace TINY_Compiler
         {
             Node functionDeclaration = new Node("Function_Declaration");
             functionDeclaration.Children.Add(Datatype());
-            functionDeclaration.Children.Add(match.Token_Class.identifier);
+            functionDeclaration.Children.Add(match.Token_Class.Identifier);
             functionDeclaration.Children.Add(match.Token_Class.LParanthesis);
             functionDeclaration.Children.Add(Parameters());
             functionDeclaration.Children.Add(match.Token_Class.RParanthesis);
             return functionDeclaration;
         }
 
-        //Parameters → Parameter, Parameters | Parameter | ε
+        //Parameters → Parameter Param | ε
         Node Parameters()
         {
             Node parameters = new Node("Parameters");
+            if(InputPointer < TokenStream.size && isDatatype())
+            {
+            parameters.Children.Add(Parameter());
+            parameters.Children.Add(Param());
+            return parameters;
+            }
+            else
+            {
+                return null;
+            }
+        }
 
+        //Param → , Parameter Param | ε
+        Node Param()
+        {
+            Node param = new Node("Param");
+            if(InputPointer < TokenStream.size && TokenStream[InputPointer].token_type == Token_Class.Comma)
+            {
+                param.Children.Add(match.Token_Class.Comma);
+                param.Children.Add(Parameter());
+                param.Children.Add(Param());
+                return param;
+            }
+            else
+            {
+                return null;
+            }
         }
 
         //Parameter → Datatype identifier
         Node Parameter()
         {
-
+            Node parameter = new Node("Parameter");
+            parameter.Children.Add(Datatype());
+            parameter.Children.Add(match.Token_Class.Identifier);
+            return parameter;
         }
 
         //Function_Body → { Statements Return_Statement }
@@ -183,14 +196,17 @@ namespace TINY_Compiler
         //Return_Statement → return Expression;
         Node Return_Statement()
         {
-
+            Node returnStatement = new Node("Return_Statement");
+            returnStatement.Children.Add(match.Token_Class.Return);
+            returnStatement.Children.Add(Expression());
+            return returnStatement;
         }
 
         //Function_Call → identifier (Args)
         Node Function_Call()
         {
             Node functionCall = new Node("Function_Call");
-            functionCall.Children.Add(match.Token_Class.identifier);
+            functionCall.Children.Add(match.Token_Class.Identifier);
             functionCall.Children.Add(match.Token_Class.LParanthesis);
             functionCall.Children.Add(Args());
             functionCall.Children.Add(match.Token_Class.RParanthesis);
@@ -200,15 +216,41 @@ namespace TINY_Compiler
         Node Args()
         {
             Node args = new Node("Args");
-            if(InputPointer < TokenStream.size && isDatatype())
-            args.Children.Add(IdList);
+            if (InputPointer < TokenStream.size && TokenStream[InputPointer].token_type == Token_Class.Identifier)
+            {
+                args.Children.Add(IdList);
+                return args;
+            }
+            else
+            {
+                return null;
+            }
         }
 
-        //IdList → identifier , IdList | identifier
+        //IdList → identifier Id
         Node IdList()
         {
             Node idList = new Node("IdList");
-            
+            idList.Children.Add(match.Token_Class.Idenifier);
+            idList.Children.Add(Id());
+            return idList;
+        }
+
+        //Id → , identifier Id | ε
+        Node Id()
+        {
+            Node id = new Node("Id");
+            if (InputPointer < TokenStream.size && TokenStream[InputPointer].token_type == Token_Class.Comma)
+            {
+                id.Children.Add(match.Token_Class.Comma);
+                id.Children.Add(match.Token_Class.Idenifier);
+                id.Children.Add(Id());
+                return id;
+            }
+            else
+            {
+                return null;
+            }
         }
 
 
@@ -222,7 +264,7 @@ namespace TINY_Compiler
         }
 
 
-// If_Statement  → if Condition_Statement then Statements IfState
+        // If_Statement  → if Condition_Statement then Statements IfState
 Node If_Statement()
 {
     Node IfStatement = new Node("If_Statement");
