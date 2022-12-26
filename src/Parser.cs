@@ -222,6 +222,63 @@ namespace TINY_Compiler
         }
 
 
+// If_Statement  → if Condition_Statement then Statements IfState
+Node If_Statement()
+{
+    Node IfStatement = new Node("If_Statement");
+    functionCall.Children.Add(match.Token_Class.if);
+    functionCall.Children.Add(Condition_Statement());
+    functionCall.Children.Add(match.Token_Class.then);
+    functionCall.Children.Add(Statements());
+    functionCall.Children.Add(IfState());
+    
+    return IfStatement;
+}
+
+// IfState → Else_If_Statment | Else_Statment | end
+Node IfState()
+{
+    Node  IfState = new Node("IfState");
+
+    if(InputPointer < TokenStream.size && (TokenStream[InputPointer].token_type == Token_Class.Elseif)
+    {
+        functionCall.Children.Add(Else_If_Statment());
+    }
+    else if(InputPointer < TokenStream.size && (TokenStream[InputPointer].token_type == Token_Class.Else)
+    {
+        functionCall.Children.Add(Else_Statment());
+    }
+    else 
+    {
+        functionCall.Children.Add(match.Token_Class.end);
+    }
+
+    return IfState;
+}
+
+//  Else_Statment → else Statements end
+Node Else_Statment()
+{
+    Node ElseStatment = new Node("Else_Statment");
+    functionCall.Children.Add(match.Token_Class.else);
+    functionCall.Children.Add(Statements());
+    functionCall.Children.Add(match.Token_Class.end);
+    return ElseStatment;
+}
+
+// Else_If_Statment → elseif Condition_Statement then Statements IfState
+Node Else_If_Statment()
+{
+    Node ElseIfStatment = new Node("Else_If_Statment");
+    functionCall.Children.Add(match.Token_Class.Elseif)
+    functionCall.Children.Add(Condition_Statement());
+    functionCall.Children.Add(match.Token_Class.then);
+    functionCall.Children.Add(Statements());
+    functionCall.Children.Add(IfState());
+
+    return ElseIfStatment;
+}
+
 // Repeat_Statement → repeat Statements until Condition_Statement
 Node Repeat_Statement()
 {
@@ -260,7 +317,7 @@ Node Condition_Expression()
 {
     Node ConditionExpression= new Node("Condition_Expression");
     
-    if(InputPointer < TokenStream.size && (TokenStream[InputPointer].token_type == Token_Class.Or || TokenStream[InputPointer].token_type == Token_Class.And ))
+    if(InputPointer < TokenStream.size && isBooleanOperator())
     {
         functionCall.Children.Add(Boolean_Operator());
         functionCall.Children.Add(Condition());
@@ -271,6 +328,11 @@ Node Condition_Expression()
     {
         return NULL;
     }
+}
+
+bool isBooleanOperator()
+{
+    return (TokenStream[InputPointer].token_type == Token_Class.Or || TokenStream[InputPointer].token_type == Token_Class.And );
 }
 
 // Boolean_Operator  → && | ||
@@ -313,12 +375,6 @@ Node Condition_Operator()
     }
 
     return ConditionOperator;
-}
-
-
-
-
-    }
 }
 
 bool isDatatype()
