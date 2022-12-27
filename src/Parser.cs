@@ -10,20 +10,19 @@ namespace TINY_Compiler
     public class Node
     {
         public List<Node> Children = new List<Node>();
+        
         public string Name;
-
         public Node(string N)
         {
             this.Name = N;
         }
     }
-
     public class Parser
     {
         int InputPointer = 0;
         List<Token> TokenStream;
-        public Node root;
-
+        public  Node root;
+        
         public Node StartParsing(List<Token> TokenStream)
         {
             this.InputPointer = 0;
@@ -32,6 +31,155 @@ namespace TINY_Compiler
             root.Children.Add(Program());
             return root;
         }
+        Node Program()
+        {
+            Node program = new Node("Program");
+            program.Children.Add(Header());
+            program.Children.Add(DeclSec());
+            program.Children.Add(Block());
+            program.Children.Add(match(Token_Class.Dot));
+            MessageBox.Show("Success");
+            return program;
+        }
+
+        // Node Header()
+        // {
+        //     Node header = new Node("Header");
+        //     // write your code here to check the header sructure
+        //     return header;
+        // }
+        // Node DeclSec()
+        // {
+        //     Node declsec = new Node("DeclSec");
+        //     // write your code here to check atleast the declare sturcure 
+        //     // without adding procedures
+        //     return declsec;
+        // }
+        // Node Block()
+        // {
+        //     Node block = new Node("block");
+        //     // write your code here to match statements
+        //     return block;
+        // }
+
+        // Implement your logic here
+
+        //Statements → State Statements
+        Node Statements()
+        {
+            Node statements = new Node("Statements");
+            statements.Children.Add(State());
+            statements.Children.Add(Statements());
+            return statements;
+        }
+
+        //State → Write_Statement |Read_Statement |
+        //  7 Declaration_Statement | 4 Assignment_Statement |
+        //  1 If_Statement | 2 Repeat_Statement |          
+        //  3 Function_Call | ε
+        Node State()
+        {
+            if(!(InputPointer < TokenStream.size)) return null;
+
+            Node state =new Node("State");
+            switch (TokenStream[InputPointer].token_type)
+            {
+                case Token_Class.Write:
+                    state.Children.Add(Write_Statement());
+                    break;
+                case Token_Class.Read:
+                    state.Children.Add(Read_Statement());
+                    break;
+                case Token_Class.If:
+                    state.Children.Add(If_Statement());
+                    break;
+                case Token_Class.Repeat:
+                    state.Children.Add(Repeat_Statement());
+                    break;
+                case Token_Class.Identifier:
+                    //Function_Call → identifier (Args)
+                    //Assignment_Statement → identifier := Expression
+                    if(InputPointer + 1 < TokenStream && TokenStream[InputPointer+1].token_type == Token_Class.LParanthesis)
+                        state.Children.Add(Function_Call());
+                    else
+                        state.Children.Add(Assignment_Statement());
+                    break;
+                case Token_Class.Write:
+                    state.Children.Add(Declaration_Statement());
+                    break;
+                default:
+                    if(!isDatatype()) return null;
+                    state.Children.Add(Declaration_Statement());
+            }
+
+            return state;
+        }
+
+        //Main_Function → Datatype main() Function_Body
+        Node Main_Function()
+        {
+            Node mainFunction = new Node("Main_Function");
+            mainFunction.Children.Add(Datatype());
+            mainFunction.Children.Add(match.Token_Class.Main);
+            mainFunction.Children.Add(match.Token_Class.LParanthesis);
+            mainFunction.Children.Add(match.Token_Class.RParanthesis);
+            mainFunction.Children.Add(Function_Body());
+            return mainFunction;
+        }
+
+        //Functions → Function_Statement Functions | ε
+        Node Functions()
+        {
+            Node functions = new Node("Functions");
+            if (InputPointer < TokenStream.size && isDatatype())
+            {
+                functions.Children.Add(Function_Statement());
+                functions.Children.Add(Functions());
+                return functions;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        //Function_Statement → Function_Declaration Function_Body
+        Node Function_Statement()
+        {
+            Node functionStatement = new Node("Function_Statement");
+            functionStatement.Children.Add(Function_Declaration());
+            functionStatement.Children.Add(Function_Body());
+            return functionStatement;
+        }
+
+        //Function_Declaration → Datatype identifier (Parameters)
+        Node Function_Declaration()
+        {
+            Node functionDeclaration = new Node("Function_Declaration");
+            functionDeclaration.Children.Add(Datatype());
+            functionDeclaration.Children.Add(match.Token_Class.Identifier);
+            functionDeclaration.Children.Add(match.Token_Class.LParanthesis);
+            functionDeclaration.Children.Add(Parameters());
+            functionDeclaration.Children.Add(match.Token_Class.RParanthesis);
+            return functionDeclaration;
+        }
+
+        //Parameters → Parameter Param | ε
+        Node Parameters()
+        {
+            Node parameters = new Node("Parameters");
+            if(InputPointer < TokenStream.size && isDatatype())
+            {
+            parameters.Children.Add(Parameter());
+            parameters.Children.Add(Param());
+            return parameters;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
         //Program → Functions Main_Function
         Node Program()
         {
@@ -512,11 +660,11 @@ namespace TINY_Compiler
         {
             Node  IfState = new Node("IfState");
 
-            if(InputPointer < TokenStream.size && (TokenStream[InputPointer].token_type == Token_Class.Elseif)
+            if(InputPointer < TokenStream.size && (TokenStream[InputPointer].token_type == Token_Class.Elseif))
             {
                 functionCall.Children.Add(Else_If_Statment());
             }
-            else if(InputPointer < TokenStream.size && (TokenStream[InputPointer].token_type == Token_Class.Else)
+            else if(InputPointer < TokenStream.size && (TokenStream[InputPointer].token_type == Token_Class.Else))
             {
                 functionCall.Children.Add(Else_Statment());
             }
@@ -671,10 +819,61 @@ namespace TINY_Compiler
                     TokenStream[InputPointer].token_type == Token_Class.Function_Call);
         }
 
-        /*bool isItAStartOfATerm(int offset)
+        public Node match(Token_Class ExpectedToken)
         {
-            return TokenStream[InputPointer + offset].token_type == Token_Class.Number
-                            ||
-                            TokenStream[InputPointer + offset].token_type == Token_Class.Identifier;
+
+            if (InputPointer < TokenStream.Count)
+            {
+                if (ExpectedToken == TokenStream[InputPointer].token_type)
+                {
+                    InputPointer++;
+                    Node newNode = new Node(ExpectedToken.ToString());
+
+                    return newNode;
+
+                }
+
+                else
+                {
+                    Errors.Error_List.Add("Parsing Error: Expected "
+                        + ExpectedToken.ToString() + " and " +
+                        TokenStream[InputPointer].token_type.ToString() +
+                        "  found\r\n");
+                    InputPointer++;
+                    return null;
+                }
+            }
+            else
+            {
+                Errors.Error_List.Add("Parsing Error: Expected "
+                        + ExpectedToken.ToString()  + "\r\n");
+                InputPointer++;
+                return null;
+            }
         }
-        */
+
+        public static TreeNode PrintParseTree(Node root)
+        {
+            TreeNode tree = new TreeNode("Parse Tree");
+            TreeNode treeRoot = PrintTree(root);
+            if (treeRoot != null)
+                tree.Nodes.Add(treeRoot);
+            return tree;
+        }
+        static TreeNode PrintTree(Node root)
+        {
+            if (root == null || root.Name == null)
+                return null;
+            TreeNode tree = new TreeNode(root.Name);
+            if (root.Children.Count == 0)
+                return tree;
+            foreach (Node child in root.Children)
+            {
+                if (child == null)
+                    continue;
+                tree.Nodes.Add(PrintTree(child));
+            }
+            return tree;
+        }
+    }
+}

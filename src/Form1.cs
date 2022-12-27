@@ -25,6 +25,8 @@ namespace TINY_Compiler
             TINY_Compiler.Start_Compiling(Code);
             PrintTokens();
             //   PrintLexemes();
+            treeView1.Nodes.Add(Parser.PrintParseTree(TINY_Compiler.treeroot));
+            PrintErrors();
 
             PrintErrors();
         }
@@ -56,10 +58,12 @@ namespace TINY_Compiler
 
         private void button2_Click(object sender, EventArgs e)
         {
-            dataGridView1.Rows.Clear();
-            textBox2.Clear();
-            Errors.Error_List.Clear();
+            textBox1.Text = "";
+            textBox2.Text = "";
             TINY_Compiler.TokenStream.Clear();
+            dataGridView1.Rows.Clear();
+            treeView1.Nodes.Clear();
+            Errors.Error_List.Clear();
         }
 
         private void textBox2_TextChanged(object sender, EventArgs e)

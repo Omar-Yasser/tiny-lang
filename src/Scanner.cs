@@ -228,7 +228,7 @@ namespace TINY_Compiler
             else
             {
                 // invalid token
-                Errors.Error_List.Add(Lex);
+                Errors.Error_List.Add("Scanner error " + Lex + "\n");
                 return;
             }
             Tokens.Add(Tok);
