@@ -93,6 +93,7 @@ namespace TINY_Compiler
             delimiters.Add(')', true);
             delimiters.Add('{', true);
             delimiters.Add('}', true);
+            delimiters.Add('_', true);
             // white spaces
             delimiters.Add(' ', true);
             delimiters.Add('\r', true);
@@ -180,6 +181,10 @@ namespace TINY_Compiler
                 {
                     CurrentLexeme = op;
                     i = j;
+                }
+                else if (SourceCode[j] == '_')
+                {
+                    CurrentLexeme += SourceCode[j++];
                 }
                 else
                 {
