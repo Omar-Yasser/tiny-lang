@@ -19,15 +19,10 @@ namespace TINY_Compiler
 
         private void button1_Click(object sender, EventArgs e)
         {
-            textBox2.Clear();
-            //string Code=textBox1.Text.ToLower();
-            string Code = textBox1.Text;
-            TINY_Compiler.Start_Compiling(Code);
+            ClearAll();
+            TINY_Compiler.Start_Compiling(textBox1.Text);
             PrintTokens();
-            //   PrintLexemes();
             treeView1.Nodes.Add(Parser.PrintParseTree(TINY_Compiler.treeroot));
-            PrintErrors();
-
             PrintErrors();
         }
         void PrintTokens()
@@ -58,7 +53,12 @@ namespace TINY_Compiler
 
         private void button2_Click(object sender, EventArgs e)
         {
-            textBox1.Text = "";
+            ClearAll();
+            textBox1.Text ="";
+        }
+
+        private void ClearAll()
+        {
             textBox2.Text = "";
             TINY_Compiler.TokenStream.Clear();
             dataGridView1.Rows.Clear();
@@ -66,10 +66,11 @@ namespace TINY_Compiler
             Errors.Error_List.Clear();
         }
 
-        private void textBox2_TextChanged(object sender, EventArgs e)
+        private void Form1_Load(object sender, EventArgs e)
         {
-
+            textBox1.AcceptsTab = true;
         }
+
         /*  void PrintLexemes()
 {
 for (int i = 0; i < TINY_Compiler.Lexemes.Count; i++)

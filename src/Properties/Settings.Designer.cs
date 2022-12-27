@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace TINY_Compiler.Properties
+namespace Tiny_Compiler.Properties
 {
 
 
