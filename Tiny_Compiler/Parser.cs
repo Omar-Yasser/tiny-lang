@@ -367,28 +367,50 @@ namespace TINY_Compiler
             return datatype;
         }
 
-        // DeclarationStatement → DataType VarsDeclartion;
-        // VarsDeclartion → identifier Initialization Declartions
-        // Initialization → := Expression | ε
-        // Declartions → , identifier Initialization Declartions | ε
+        // DecState → identifier Initialization Declartions
         Node DecState()
         {
             Node decState = new Node("DecState");
-            //Debug.Assert(InputPointer < TokenStream.Count);
-            if (!(InputPointer < TokenStream.Count) || TokenStream[InputPointer].token_type == Token_Class.Semicolon)
+
+            decState.Children.Add(match(Token_Class.Idenifier));
+            decState.Children.Add(Initialization());
+            decState.Children.Add(Declartions());
+
+            return decState;
+        }
+        // Initialization → := Expression | ε
+        Node Initialization()
+        {
+            Node initialization = new Node("Initialization");
+            if (InputPointer < TokenStream.Count && TokenStream[InputPointer].token_type == Token_Class.AssignmentOp)
             {
-                return decState;
-            }
-            else if (TokenStream[InputPointer].token_type == Token_Class.Idenifier && InputPointer + 1 < TokenStream.Count && TokenStream[InputPointer + 1].token_type == Token_Class.AssignmentOp)
-            {
-                decState.Children.Add(AssignState());    
+                initialization.Children.Add(match(Token_Class.AssignmentOp));
+                initialization.Children.Add(Expression());
+                return initialization;
             }
             else
             {
-                decState.Children.Add(IdList());
+                return null;
             }
-            decState.Children.Add(DecState());
-            return decState;
+        }
+
+
+        // Declartions → , identifier Initialization Declartions | ε
+        Node Declartions()
+        {
+            Node declartions = new Node("Declartions");
+            if (InputPointer < TokenStream.Count && TokenStream[InputPointer].token_type == Token_Class.Comma)
+            {
+                declartions.Children.Add(match(Token_Class.Comma));
+                declartions.Children.Add(match(Token_Class.Idenifier));
+                declartions.Children.Add(Initialization());
+                declartions.Children.Add(Declartions());
+                return declartions;
+            }
+            else
+            {
+                return null;
+            }
         }
 
         Node AssignState()
