@@ -50,7 +50,7 @@ namespace TINY_Compiler
             if (!(InputPointer < TokenStream.Count)) return null;
             Node statements = new Node("Statements");
             statements.Children.Add(State());
-            if (InputPointer < TokenStream.Count && TokenStream[InputPointer].token_type != Token_Class.Return && TokenStream[InputPointer].token_type != Token_Class.Until && TokenStream[InputPointer].token_type != Token_Class.Elseif && TokenStream[InputPointer].token_type != Token_Class.Else && TokenStream[InputPointer].token_type != Token_Class.End)
+            if (InputPointer < TokenStream.Count && TokenStream[InputPointer].token_type != Token_Class.Return && TokenStream[InputPointer].token_type != Token_Class.Until && TokenStream[InputPointer].token_type != Token_Class.Elseif && TokenStream[InputPointer].token_type != Token_Class.Else && TokenStream[InputPointer].token_type != Token_Class.End && TokenStream[InputPointer].token_type != Token_Class.RBrace)
             {
                 statements.Children.Add(Statements());
             }
@@ -195,7 +195,7 @@ namespace TINY_Compiler
         {
             Node functionBody = new Node("Function_Body");
             functionBody.Children.Add(match(Token_Class.LBrace));
-            if (InputPointer < TokenStream.Count && TokenStream[InputPointer].token_type != Token_Class.Return)
+            if (InputPointer < TokenStream.Count && TokenStream[InputPointer].token_type != Token_Class.Return && TokenStream[InputPointer].token_type != Token_Class.RBrace)
                 functionBody.Children.Add(Statements());
             functionBody.Children.Add(Return_Statement());
             functionBody.Children.Add(match(Token_Class.RBrace));
